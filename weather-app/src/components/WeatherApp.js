@@ -2,14 +2,15 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSun, faMoon, faSyncAlt } from "@fortawesome/free-solid-svg-icons";
-import styles  from "./style.module.css";
-
+import styles from "./style.module.css";
+import Preloader from "./Preloader";
 
 const apiKey = "1da550247f2ed8a45a02dda55086b7a2";
 
 export default function WeatherApp() {
   const [city, setCity] = useState("");
   const [weatherData, setWeatherData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const storedCity = localStorage.getItem("userCity");
@@ -23,6 +24,7 @@ export default function WeatherApp() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setLoading(true); // Set loading to true when submitting the form
     getWeatherData();
   };
 
@@ -39,10 +41,14 @@ export default function WeatherApp() {
       })
       .catch((error) => {
         console.error("Error:", error);
+      })
+      .finally(() => {
+        setLoading(false); // Set loading to false when the request is completed
       });
   };
 
   const refreshWeather = () => {
+    setLoading(true); // Set loading to true when refreshing weather
     getWeatherData();
   };
 
@@ -52,26 +58,28 @@ export default function WeatherApp() {
   };
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.mainContainer}>
-        <form onSubmit={handleSubmit}>
-          <h1>Skycast Weather App</h1>
-          <label htmlFor="cityInput">Enter City:</label>
-          <input
-            type="text"
-            id="cityInput"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            required
-          />
-          <button type="submit">Get Weather</button>
-          <span id="refreshIcon" onClick={refreshWeather}>
-            <FontAwesomeIcon icon={faSyncAlt} spin />
-          </span>
-        </form>
-        {weatherData && (
+    <div className={styles.mainContainer}>
+      <form onSubmit={handleSubmit}>
+        <h1>Skycast Weather App</h1>
+        <label htmlFor="cityInput">Enter City:</label>
+        <input
+          type="text"
+          id="cityInput"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          required
+        />
+        <button type="submit">Get Weather</button>
+        <span id="refreshIcon" onClick={refreshWeather}>
+          <FontAwesomeIcon icon={faSyncAlt} spin={loading} />
+        </span>
+      </form>
+      {loading ? (
+        <Preloader />
+      ) : (
+        weatherData && (
           <div id="weatherData" className={styles.weatherData}>
-            <p>
+          <p>
               {weatherData.main.temp.toFixed(1)}°C temperature from{" "}
               {weatherData.main.temp_min.toFixed(1)} to{" "}
               {weatherData.main.temp_max.toFixed(1)}°C
@@ -100,9 +108,8 @@ export default function WeatherApp() {
               Time: {new Date().toLocaleTimeString()}
             </p>
           </div>
-        )}
-      </div>
+        )
+      )}
     </div>
   );
-};
-
+}
